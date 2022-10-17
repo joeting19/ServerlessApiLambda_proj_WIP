@@ -1,11 +1,7 @@
 {\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
 {\*\generator Riched20 10.0.22621}\viewkind4\uc1 
-\pard\sa200\sl276\slmult1\b\f0\fs22\lang9 Assignment final\b0\par
-\b caveats:\b0\par
-used mysql instead of Postgress... was unable to find a package that allowed me to call the psycopg2 commands. So instead i opted for pymysql.\par
-automated health checks... I will opt to use postman to automate teh testing. However i will not include it here at this time.\par
-\b High level Diagram\par
-\b0\par
+\pard\sa200\sl276\slmult1\b\f0\fs22\lang9 Assignment final: Created by joseph TIng, October 15...\b0\par
+\b High level Diagram\b0\par
 
 \pard\sa200\sl240\slmult1\b{\pict{\*\picprop}\wmetafile8\picw11705\pich8509\picwgoal6636\pichgoal4824 
 01000900000330770f0000001a770f000000050000000b0200000000050000000c023d21b92d1a
@@ -51988,36 +51984,38 @@ fef9f9f9f8f8f8fefefefefefefefefefefefefefefefefefefefefefefefe0000000300000000
 00
 }\par
 
-\pard\sa200\sl276\slmult1\b0\par
-\par
-\par
-\par
-\b api gateway\b0 ... relays api requests to lambda function. \par
-\b\par
-consists of rds database...\par
+\pard\sa200\sl276\slmult1 Basic logic\b0 : Client will connect to the serverless function via api gateway, which will invoke lambda to write to rds database.\par
+-second lambda function to scan database once a day to delete data older than 30 days.\par
+-the databases are placed in private subnets. In order for lambda to connect, I place the lambdas in the private subnets within the VPC of the database. \par
+-cloudwatch to collect logs with 7 day retention configured. \par
+\b Components of this architecture:\par
+APi gateway integrated with lambda.\par
+\b0\tab -Include api keys\b\par
+RDS database to store data\par
+\i\tab *i use MySQL because i was unable to configure a lambda layer to work with Postgres \tab libraries...\b0\i0\par
+
+\pard\li720\sa200\sl276\slmult1 Elasticache... (in this case,we use API gateway caching. For simplicity, and fewer lambda executions.)\par
+
+\pard\sa200\sl276\slmult1\b Cloudwatch to store logs from lambda, api gateway.\b0\par
+\b IAM Permissions/Secrets: \par
+\tab -use secrets manager to store database secrets.\par
+\b0\tab -create role for lambda execution.\par
+\tab\tab\b Include permissions for...\b0\par
+\tab\tab -VPC interfaces.\par
+\tab\tab -decrypt secrets.\par
+\tab\tab -get KMS key.\par
+\b 1st lambda function.\b0\par
+\b\tab -This one handles API requests from API gateway. \b0\par
+\tab\b -use boto3 to grab secrets from SM, decrypt and connect to database.\par
+\tab -use fields from the APi request to upload data to database\par
+\tab -include a timestamp for the database at write time. \par
+2nd lambda function.\par
+\tab -triggered by cloudwatch event (every day).\par
+\tab -scans table and deletes record older than 30 days based on the timestamp.\par
 \b0\par
-\b 2 lambda functions... \b0\par
-\tab one to delete records from db exceeding 30 days. On a cloud watch event trigger. \par
-\tab one for api calls from itnernet... to put data into the database or retrieve.\par
-\tab *lambda functions use secrets manager to access database. \par
-\tab -enable cloudwatch logs for different components. \par
-\par
-Regarding the file downloads...\par
-\tab -could use api s3 integration if the files is less than 4mb...\par
-\tab -otherwise could use lambda function to \par
-S3 proxy integration with API gateway... to upload files to s3 via API... configure s3 with 30 day policy...\par
-*api key add that...\par
-\par
-\par
-\b API gateway which has \par
-two resources...\par
-\tab first resource is for the lambda connecting with the db... contains info about the user, \par
-\tab etc...\par
-\b0\tab\tab includes put... could also include get...\par
-\tab\tab\par
-\tab\b second resource is for the lambda connecting with s3.\b0\par
-\tab\tab includes a put method.\par
-\par
+*note, I included 2 zip files with the functions. I created the functions for testing purposes (to test ability to decrypt secrets and perform actions on the database)... THey are pretty buggy. but you can fiddle with them by changing the table name, as well as the value of the userid and deploy and test the lambda. You should get successful results. ALso,you only execute the line to create table once. Then you comment it out for future tests to input data. \par
+*also was not able to configure the API gateway all the way... to fully integrate with the applicaiton due to lacking the API code from the developer. SInce i was not provided with the applicaiton code, i left this part out.\par
+*\b\i Right now, i have not included the health check. \b0\i0 For\b\i  \b0\i0 this, I am proposing to use Postman to automate health check of the api test endpoints. This can be integrated into a CI/CD solution. I leave this as a future improvementto the project. \par
 \par
 \par
 \par
